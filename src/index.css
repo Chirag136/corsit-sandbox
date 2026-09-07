@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --base: #120C11;
+  --panel: #1D1418;
+  --panel-2: #241A1F;
+  --maroon: #7A1B2B;
+  --red: #C13B3B;
+  --plum: #4B3358;
+  --plum-light: #6B4A78;
+  --white: #F1E9E4;
+  --muted: #9C8B90;
+  --trace: #3A2A2E;
+}
+
+body {
+  background-color: var(--base);
+  color: var(--white);
+  font-family: 'Space Grotesk', sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom PCB Grid Background */
+.pcb-grid {
+  background-color: var(--base);
+  background-image: 
+    radial-gradient(var(--trace) 1px, transparent 1px),
+    linear-gradient(to right, rgba(58, 42, 46, 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(58, 42, 46, 0.25) 1px, transparent 1px);
+  background-size: 20px 20px, 100px 100px, 100px 100px;
+}
+
+.pcb-border-b {
+  border-bottom: 1px solid var(--trace);
+}
+.pcb-border-t {
+  border-top: 1px solid var(--trace);
+}
+.pcb-border-r {
+  border-right: 1px solid var(--trace);
+}
+.pcb-border-l {
+  border-left: 1px solid var(--trace);
+}
+
+/* Subtle glowing aperture ring for CorSIT logo hero moment */
+.aperture-glow {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(193, 59, 59, 0.75) 0%, rgba(122, 27, 43, 0.4) 45%, transparent 70%);
+  filter: blur(8px);
+  animation: aperturePulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes aperturePulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.18);
+  }
+}
+
+/* Custom Scrollbar for sidebars & code viewer */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #120C11;
+}
+::-webkit-scrollbar-thumb {
+  background: #3A2A2E;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4B3358;
+}
+
+/* Wire pulse animation */
+@keyframes signalFlow {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.wire-signal {
+  animation: signalFlow 0.8s linear infinite;
+}
+
+/* Blockly dark overrides to match CorSIT aesthetics */
+.blocklySvg {
+  background-color: #120C11 !important;
+}
+.blocklyFlyoutBackground {
+  fill: #1D1418 !important;
+  fill-opacity: 0.95 !important;
+}
+.blocklyScrollbarHandle {
+  fill: #3A2A2E !important;
+}
+.blocklyMainBackground {
+  stroke: #3A2A2E !important;
+}
+.blocklyToolboxDiv {
+  background-color: #1D1418 !important;
+  color: #F1E9E4 !important;
+  border-right: 1px solid #3A2A2E !important;
+}
+.blocklyTreeLabel {
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-size: 13px !important;
+  color: #9C8B90 !important;
+}
+.blocklyTreeRow.blocklyTreeSelected .blocklyTreeLabel {
+  color: #F1E9E4 !important;
+}
+.blocklyTreeRow:hover {
+  background-color: #241A1F !important;
+}
