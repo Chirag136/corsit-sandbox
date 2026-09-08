@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { User, storageService } from '../../services/storageService';
-import { Bot } from 'lucide-react';
+
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
@@ -20,8 +20,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-base text-white p-4">
       <div className="w-full max-w-md bg-panel p-8 rounded-xl shadow-2xl border border-trace flex flex-col items-center">
-        <div className="w-16 h-16 bg-red/20 text-red rounded-full flex items-center justify-center mb-6">
-          <Bot size={32} />
+        <div className="w-24 h-24 mb-6 flex items-center justify-center">
+          <img
+            src={`${import.meta.env.BASE_URL}corsit-logo-transparent.png`}
+            alt="CorSIT Logo"
+            className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
+          />
         </div>
         <h1 className="text-2xl font-bold font-sans tracking-tight mb-2 text-center">
           CorSIT Sandbox

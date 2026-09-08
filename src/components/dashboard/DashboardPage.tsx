@@ -1,6 +1,6 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, SavedProject, storageService } from '../../services/storageService';
-import { Bot, Plus, Trash2, Clock, Play } from 'lucide-react';
+import { Plus, Trash2, Clock, Play } from 'lucide-react';
 import { EMPTY_CIRCUIT } from '../../data/presetCircuits';
 
 interface DashboardPageProps {
@@ -31,10 +31,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout, on
   return (
     <div className="min-h-screen bg-base text-white p-8">
       <div className="max-w-6xl mx-auto">
-        <header className="flex justify-between items-center mb-12">
+          <header className="flex justify-between items-center mb-12">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red/20 text-red rounded-full flex items-center justify-center">
-              <Bot size={20} />
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img
+                src={`${import.meta.env.BASE_URL}corsit-logo-transparent.png`}
+                alt="CorSIT Logo"
+                className="w-full h-full object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
+              />
             </div>
             <div>
               <h1 className="text-xl font-bold font-sans">CorSIT Dashboard</h1>
@@ -62,8 +66,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout, on
           </div>
 
           {projects.length === 0 ? (
-            <div className="bg-panel border border-trace border-dashed rounded-xl p-12 text-center text-muted">
-              <Bot size={48} className="mx-auto mb-4 opacity-20" />
+            <div className="bg-panel border border-trace border-dashed rounded-xl p-12 text-center text-muted flex flex-col items-center">
+              <img
+                src={`${import.meta.env.BASE_URL}corsit-logo-transparent.png`}
+                alt="CorSIT Logo"
+                className="h-16 w-auto mb-4 opacity-30 grayscale"
+              />
               <p>You don't have any saved projects yet.</p>
               <p className="text-sm mt-2">Click "New Project" to start building.</p>
             </div>
