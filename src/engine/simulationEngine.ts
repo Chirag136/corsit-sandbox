@@ -307,11 +307,20 @@ export class SimulationEngine {
   }
 
   private propagateSignals() {
-    // 1. Reset passive component pins to 'LOW' so turned-off outputs immediately extinguish loads
+    // 1. Reset passive component and actuator input pins to 'LOW' so turned-off outputs immediately clear
     for (const comp of this.circuit.components) {
       if (comp.type === 'LED' || comp.type === 'Resistor' || comp.type === 'Breadboard') {
         for (const pin of comp.pins) {
           pin.value = 'LOW';
+        }
+      } else if (comp.type === 'MotorDriver') {
+        // Reset control input pins
+        for (const pin of comp.pins) {
+          if (pin.id === 'IN1' || pin.id === 'IN2' || pin.id === 'IN3' || pin.id === 'IN4') {
+            pin.value = 'LOW';
+          } else if (pin.id === 'ENA' || pin.id === 'ENB') {
+            pin.value = 0;
+          }
         }
       }
     }
@@ -338,15 +347,26 @@ export class SimulationEngine {
         const toPin = toComp.pins.find((p) => p.id === conn.to.pinId);
         if (!fromPin || !toPin) continue;
 
-        const fromIsActive = fromPin.value === 'HIGH' || (typeof fromPin.value === 'number' && fromPin.value > 0);
-        const toIsActive = toPin.value === 'HIGH' || (typeof toPin.value === 'number' && toPin.value > 0);
+        const fromIsMcu = fromComp.type === 'ESP32' || fromComp.type === 'ArduinoUno';
+        const toIsMcu = toComp.type === 'ESP32' || toComp.type === 'ArduinoUno';
 
-        if (fromIsActive && !toIsActive) {
+        if (fromIsMcu && !toIsMcu) {
+          // MCU output directly controls destination pin
           toPin.value = fromPin.value;
-        } else if (toIsActive && !fromIsActive) {
-          const toIsSource = toComp.type === 'ArduinoUno' || toComp.type === 'ESP32' || toPin.kind === 'power';
-          if (toIsSource) {
-            fromPin.value = toPin.value;
+        } else if (toIsMcu && !fromIsMcu) {
+          // Input to MCU
+          toPin.value = fromPin.value;
+        } else {
+          const fromIsActive = fromPin.value === 'HIGH' || (typeof fromPin.value === 'number' && fromPin.value > 0);
+          const toIsActive = toPin.value === 'HIGH' || (typeof toPin.value === 'number' && toPin.value > 0);
+
+          if (fromIsActive && !toIsActive) {
+            toPin.value = fromPin.value;
+          } else if (toIsActive && !fromIsActive) {
+            const toIsSource = toPin.kind === 'power';
+            if (toIsSource) {
+              fromPin.value = toPin.value;
+            }
           }
         }
       }
