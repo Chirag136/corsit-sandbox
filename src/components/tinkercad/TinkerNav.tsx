@@ -52,6 +52,7 @@ interface TinkerNavProps {
   onToggleComponentDrawer: () => void;
   onOpenAiModal: () => void;
   onExportCode: () => void;
+  onSaveAndExit?: () => void;
   hasErrors: boolean;
   errorCount: number;
 }
@@ -75,6 +76,7 @@ export const TinkerNav: React.FC<TinkerNavProps> = ({
   onToggleComponentDrawer,
   onOpenAiModal,
   onExportCode,
+  onSaveAndExit,
   hasErrors,
   errorCount,
 }) => {
@@ -289,6 +291,17 @@ export const TinkerNav: React.FC<TinkerNavProps> = ({
             </span>
           )}
         </button>
+
+        {/* Save & Exit Button */}
+        {onSaveAndExit && (
+          <button
+            onClick={onSaveAndExit}
+            title="Save Project and Exit to Dashboard"
+            className="flex items-center gap-1 px-3 py-1.5 rounded bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-colors shadow"
+          >
+            <span className="hidden lg:inline">Save & Exit</span>
+          </button>
+        )}
 
         {/* Export C++ Button */}
         <button
