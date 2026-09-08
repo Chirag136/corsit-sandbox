@@ -8,6 +8,7 @@ import {
 import { RobotState, Obstacle } from './types/simulation';
 import { CircuitExplanation } from './types/ai';
 import { OBSTACLE_AVOIDER_CIRCUIT, PRESET_CIRCUITS } from './data/presetCircuits';
+import { TRACK_PRESETS } from './data/trackPresets';
 import { createComponentInstance } from './data/componentCatalog';
 import { SimulationEngine } from './engine/simulationEngine';
 import { aiService } from './services/aiService';
@@ -51,26 +52,23 @@ export function App() {
 
   // Simulation Engine Ref
   const engineRef = useRef<SimulationEngine | null>(null);
+  const defaultTrack = TRACK_PRESETS[0];
   const [robotState, setRobotState] = useState<RobotState>({
-    x: 100,
-    y: 100,
-    heading: 0,
+    x: defaultTrack.robotStart.x,
+    y: defaultTrack.robotStart.y,
+    heading: defaultTrack.robotStart.heading,
     width: 44,
     length: 56,
     speedLeft: 0,
     speedRight: 0,
     sensorRangeCm: 400,
     detectedDistanceCm: 400,
-    sensorRayEnd: { x: 500, y: 100 },
-    pathHistory: [{ x: 100, y: 100 }],
+    sensorRayEnd: { x: 500, y: defaultTrack.robotStart.y },
+    pathHistory: [{ x: defaultTrack.robotStart.x, y: defaultTrack.robotStart.y }],
     isColliding: false,
   });
 
-  const [obstacles, setObstacles] = useState<Obstacle[]>([
-    { id: 'obs_1', x: 260, y: 70, width: 80, height: 80, label: 'Block A' },
-    { id: 'obs_2', x: 140, y: 220, width: 100, height: 60, label: 'Wall B' },
-    { id: 'obs_3', x: 380, y: 210, width: 70, height: 100, label: 'Pillar C' },
-  ]);
+  const [obstacles, setObstacles] = useState<Obstacle[]>(defaultTrack.obstacles);
 
   // Record undo state
   const pushUndoState = () => {
@@ -344,26 +342,42 @@ export function App() {
   };
 
   // Robot Arena handlers
-  const handleResetRobot = () => {
+  const handleResetRobot = (x = 100, y = 100, heading = 0) => {
     if (engineRef.current) {
-      engineRef.current.resetRobot(100, 100, 0);
+      engineRef.current.resetRobot(x, y, heading);
       setRobotState(engineRef.current.getRobot());
+    } else {
+      setRobotState((prev) => ({
+        ...prev,
+        x,
+        y,
+        heading,
+        speedLeft: 0,
+        speedRight: 0,
+        pathHistory: [{ x, y }],
+        isColliding: false,
+      }));
     }
   };
 
-  const handleAddObstacle = () => {
-    const newObs: Obstacle = {
-      id: `obs_${Date.now()}`,
-      x: 180 + Math.random() * 200,
-      y: 100 + Math.random() * 150,
-      width: 60,
-      height: 60,
-      label: `Box ${obstacles.length + 1}`,
-    };
-    const updated = [...obstacles, newObs];
+  const handleUpdateObstacles = (updated: Obstacle[]) => {
     setObstacles(updated);
     if (engineRef.current) {
       engineRef.current.setObstacles(updated);
+    }
+  };
+
+  const handleUpdateRobotPos = (x: number, y: number) => {
+    if (engineRef.current) {
+      engineRef.current.setRobotPosition(x, y);
+      setRobotState({ ...engineRef.current.getRobot() });
+    } else {
+      setRobotState((prev) => ({
+        ...prev,
+        x,
+        y,
+        pathHistory: [{ x, y }],
+      }));
     }
   };
 
@@ -467,7 +481,8 @@ export function App() {
         obstacles={obstacles}
         isRunning={isRunning}
         onResetRobot={handleResetRobot}
-        onAddObstacle={handleAddObstacle}
+        onUpdateObstacles={handleUpdateObstacles}
+        onUpdateRobotPos={handleUpdateRobotPos}
       />
 
       {/* 5. Production C++ Firmware Export Modal */}

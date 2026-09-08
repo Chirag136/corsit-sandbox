@@ -9,8 +9,9 @@ interface ArenaModalProps {
   robot: RobotState;
   obstacles: Obstacle[];
   isRunning: boolean;
-  onResetRobot: () => void;
-  onAddObstacle: () => void;
+  onResetRobot: (x?: number, y?: number, heading?: number) => void;
+  onUpdateObstacles: (obstacles: Obstacle[]) => void;
+  onUpdateRobotPos?: (x: number, y: number) => void;
 }
 
 export const ArenaModal: React.FC<ArenaModalProps> = ({
@@ -20,7 +21,8 @@ export const ArenaModal: React.FC<ArenaModalProps> = ({
   obstacles,
   isRunning,
   onResetRobot,
-  onAddObstacle,
+  onUpdateObstacles,
+  onUpdateRobotPos,
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
 
@@ -30,7 +32,7 @@ export const ArenaModal: React.FC<ArenaModalProps> = ({
     <div className="fixed bottom-4 right-4 z-40 shadow-2xl animate-in slide-in-from-bottom-6 duration-200">
       <div
         className={`bg-panel border border-trace rounded-lg flex flex-col overflow-hidden shadow-2xl transition-all ${
-          isExpanded ? 'w-[750px] h-[520px]' : 'w-[520px] h-[380px]'
+          isExpanded ? 'w-[780px] h-[540px]' : 'w-[580px] h-[440px]'
         }`}
       >
         {/* Header */}
@@ -41,7 +43,7 @@ export const ArenaModal: React.FC<ArenaModalProps> = ({
               Virtual Robot Test Track
             </span>
             <span
-              className={`text-[9px] font-mono px-1.5 py-0.2 rounded border ${
+              className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
                 isRunning
                   ? 'bg-emerald-950 text-emerald-400 border-emerald-800 animate-pulse'
                   : 'bg-base text-muted border-trace'
@@ -75,7 +77,8 @@ export const ArenaModal: React.FC<ArenaModalProps> = ({
             obstacles={obstacles}
             isRunning={isRunning}
             onResetRobot={onResetRobot}
-            onAddObstacle={onAddObstacle}
+            onUpdateObstacles={onUpdateObstacles}
+            onUpdateRobotPos={onUpdateRobotPos}
           />
         </div>
       </div>

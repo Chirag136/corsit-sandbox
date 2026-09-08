@@ -82,6 +82,12 @@ export class SimulationEngine {
     };
   }
 
+  public setRobotPosition(x: number, y: number) {
+    this.robot.x = x;
+    this.robot.y = y;
+    this.robot.pathHistory = [{ x, y }];
+  }
+
   public start(callback: (result: SimulationStepResult) => void) {
     if (this.isRunning) return;
     this.isRunning = true;
