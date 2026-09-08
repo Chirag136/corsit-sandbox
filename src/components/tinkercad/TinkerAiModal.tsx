@@ -11,6 +11,8 @@ import {
   Check,
   Bot,
   Terminal,
+  Settings,
+  Key,
 } from 'lucide-react';
 import { aiService } from '../../services/aiService';
 
@@ -37,11 +39,19 @@ export const TinkerAiModal: React.FC<TinkerAiModalProps> = ({
   arduinoCode,
   isAiBusy,
 }) => {
-  const [activeTab, setActiveTab] = useState<'errors' | 'autowire' | 'explain' | 'debug'>('errors');
+  const [activeTab, setActiveTab] = useState<'errors' | 'autowire' | 'explain' | 'debug' | 'settings'>('errors');
   const [promptInput, setPromptInput] = useState('build me an obstacle-avoiding bot');
   const [debugIssue, setDebugIssue] = useState('Bot is not turning when obstacle detected');
   const [debugResult, setDebugResult] = useState<CodeDebugResult | null>(null);
   const [isDebugging, setIsDebugging] = useState(false);
+
+  // LLM Config state
+  const [llmProvider, setLlmProvider] = useState<'mock' | 'gemini' | 'claude' | 'openai'>(
+    aiService.getConfig().provider || 'mock'
+  );
+  const [llmKey, setLlmKey] = useState(aiService.getConfig().apiKey || '');
+  const [llmModel, setLlmModel] = useState(aiService.getConfig().model || '');
+  const [saveMessage, setSaveMessage] = useState('');
 
   if (!isOpen) return null;
 
@@ -143,6 +153,18 @@ export const TinkerAiModal: React.FC<TinkerAiModalProps> = ({
           >
             <Terminal className="w-3.5 h-3.5" />
             <span>Code Debugger</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`flex-1 py-2.5 px-3 flex items-center justify-center gap-1.5 border-b-2 transition-colors ${
+              activeTab === 'settings'
+                ? 'border-emerald-400 text-emerald-400 bg-panel/70'
+                : 'border-transparent text-muted hover:text-white'
+            }`}
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span>LLM Model / API</span>
           </button>
         </div>
 
@@ -343,6 +365,119 @@ export const TinkerAiModal: React.FC<TinkerAiModalProps> = ({
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* TAB 5: LLM MODEL / API CONFIGURATION */}
+          {activeTab === 'settings' && (
+            <div className="space-y-4 font-sans text-xs">
+              <div className="bg-panel-2 border border-trace rounded p-3.5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Key className="w-4 h-4 text-emerald-400" />
+                  <h4 className="font-mono font-bold text-white text-xs uppercase tracking-wider">
+                    LLM Engine & API Keys
+                  </h4>
+                </div>
+                <p className="text-xs text-muted leading-relaxed">
+                  Connect live frontier models (Google Gemini 1.5, Anthropic Claude 3.5 Sonnet, or OpenAI GPT-4o) directly to your circuit simulator for real-time electrical debugging and AI reasoning.
+                </p>
+
+                {/* Provider Selector */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-mono text-muted uppercase">Provider:</label>
+                  <div className="grid grid-cols-4 gap-2 font-mono text-xs">
+                    {(['mock', 'gemini', 'claude', 'openai'] as const).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => {
+                          setLlmProvider(p);
+                          if (p === 'gemini' && !llmModel) setLlmModel('gemini-1.5-flash');
+                          else if (p === 'claude' && !llmModel) setLlmModel('claude-3-5-sonnet-20241022');
+                          else if (p === 'openai' && !llmModel) setLlmModel('gpt-4o-mini');
+                        }}
+                        className={`py-2 px-2.5 rounded border text-center font-medium transition-all ${
+                          llmProvider === p
+                            ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 shadow-sm'
+                            : 'bg-base border-trace text-muted hover:text-white'
+                        }`}
+                      >
+                        {p === 'mock' ? 'Built-in (Fast)' : p.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* API Key Input */}
+                {llmProvider !== 'mock' && (
+                  <div className="space-y-3 pt-2">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-mono text-muted uppercase">
+                        {llmProvider.toUpperCase()} API Key:
+                      </label>
+                      <input
+                        type="password"
+                        value={llmKey}
+                        onChange={(e) => setLlmKey(e.target.value)}
+                        placeholder={
+                          llmProvider === 'gemini'
+                            ? 'AIzaSy...'
+                            : llmProvider === 'claude'
+                            ? 'sk-ant-api03-...'
+                            : 'sk-proj-...'
+                        }
+                        className="w-full bg-base border border-trace rounded p-2 text-white font-mono text-xs focus:border-emerald-400 focus:outline-none"
+                      />
+                      <span className="text-[10px] text-muted font-sans">
+                        Keys are safely stored in your local browser storage and never sent to external third parties.
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-mono text-muted uppercase">Model Name (Optional):</label>
+                      <input
+                        type="text"
+                        value={llmModel}
+                        onChange={(e) => setLlmModel(e.target.value)}
+                        placeholder={
+                          llmProvider === 'gemini'
+                            ? 'gemini-1.5-flash'
+                            : llmProvider === 'claude'
+                            ? 'claude-3-5-sonnet-20241022'
+                            : 'gpt-4o-mini'
+                        }
+                        className="w-full bg-base border border-trace rounded p-2 text-white font-mono text-xs focus:border-emerald-400 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Save Button */}
+                <div className="pt-2 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      aiService.setConfig({
+                        provider: llmProvider,
+                        apiKey: llmKey.trim(),
+                        model: llmModel.trim(),
+                      });
+                      setSaveMessage('✓ AI Provider Configuration Saved!');
+                      setTimeout(() => setSaveMessage(''), 3000);
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-mono font-semibold text-xs transition-colors flex items-center gap-1.5"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    Save Configuration
+                  </button>
+
+                  {saveMessage && (
+                    <span className="text-xs font-mono text-emerald-400 animate-in fade-in">
+                      {saveMessage}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>

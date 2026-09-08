@@ -127,13 +127,18 @@ export function validateCircuit(circuit: Circuit): CircuitError[] {
     // Check missing current-limiting resistor:
     // If anode is wired directly to a GPIO or 3V3 without a Resistor component
     if (anodeTarget) {
-      const targetComp = components.find((c) => c.id === anodeTarget.componentId);
-      if (targetComp && targetComp.type !== 'Resistor' && (anodeTarget.pinId.startsWith('GPIO') || anodeTarget.pinId === '3V3')) {
+      const isDirectMcuPin =
+        anodeTarget.pinId.startsWith('GPIO') ||
+        anodeTarget.pinId.startsWith('D') ||
+        anodeTarget.pinId === '3V3' ||
+        anodeTarget.pinId === '5V';
+
+      if (targetComp && targetComp.type !== 'Resistor' && isDirectMcuPin) {
         errors.push({
           componentId: led.id,
           issue: 'Missing Current-Limiting Resistor',
-          explanation: 'Connecting an LED Anode directly to ESP32 3.3V or GPIO causes over-current (>40mA) and will burn out the LED or damage the GPIO pad.',
-          suggestedFix: 'Insert a 220Ω Resistor in series between the GPIO pin and the LED Anode.',
+          explanation: `Connecting an LED Anode directly to ${targetComp.label}'s ${anodeTarget.pinId} without a resistor causes excessive forward current (>40mA) and will destroy the LED junction.`,
+          suggestedFix: 'Insert a 220Ω Resistor in series between the MCU pin and the LED Anode.',
         });
       }
     }

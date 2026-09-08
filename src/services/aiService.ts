@@ -10,7 +10,8 @@ import {
 
 export interface AiConfig {
   apiKey?: string;
-  provider: 'mock' | 'claude' | 'gemini';
+  provider: 'mock' | 'claude' | 'gemini' | 'openai';
+  model?: string;
   apiEndpoint?: string;
 }
 
@@ -22,10 +23,84 @@ class AiService {
 
   public setConfig(config: Partial<AiConfig>) {
     this.config = { ...this.config, ...config };
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('corsit_ai_config', JSON.stringify(this.config));
+      }
+    } catch {}
   }
 
   public getConfig(): AiConfig {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage && !this.config.apiKey) {
+        const saved = window.localStorage.getItem('corsit_ai_config');
+        if (saved) {
+          this.config = { ...this.config, ...JSON.parse(saved) };
+        }
+      }
+    } catch {}
     return this.config;
+  }
+
+  private async callLlm(prompt: string, systemInstruction: string): Promise<string | null> {
+    const cfg = this.getConfig();
+    if (!cfg.apiKey) return null;
+
+    if (cfg.provider === 'gemini') {
+      const model = cfg.model || 'gemini-1.5-flash';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cfg.apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `${systemInstruction}\n\nUser query:\n${prompt}` }] }],
+          generationConfig: { responseMimeType: 'application/json' },
+        }),
+      });
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+    }
+
+    if (cfg.provider === 'claude') {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': cfg.apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: cfg.model || 'claude-3-5-sonnet-20241022',
+          max_tokens: 1000,
+          system: systemInstruction,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+      const data = await response.json();
+      return data.content?.[0]?.text || null;
+    }
+
+    if (cfg.provider === 'openai') {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${cfg.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: cfg.model || 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemInstruction },
+            { role: 'user', content: prompt },
+          ],
+          response_format: { type: 'json_object' },
+        }),
+      });
+      const data = await response.json();
+      return data.choices?.[0]?.message?.content || null;
+    }
+
+    return null;
   }
 
   /**
@@ -35,37 +110,25 @@ class AiService {
     // Run rule-based validator first
     const ruleErrors = validateCircuit(circuit);
 
-    // If live API key is available, we could augment with LLM
-    if (this.config.provider === 'claude' && this.config.apiKey) {
+    // If live API key is available, augment with LLM
+    if (this.config.apiKey) {
       try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': this.config.apiKey,
-            'anthropic-version': '2023-06-01',
-          },
-          body: JSON.stringify({
-            model: 'claude-3-5-sonnet-20241022',
-            max_tokens: 1000,
-            system: 'You are a robotics teaching assistant. Given this circuit JSON, identify wiring errors (e.g. missing resistor, wrong pin type, TRIG/ECHO swapped, disconnected power/ground) and explain each in plain English. Return JSON with format { "errors": [ { "componentId": string, "issue": string, "explanation": string, "suggestedFix": string } ] }',
-            messages: [{ role: 'user', content: JSON.stringify(circuit) }],
-          }),
-        });
-        const data = await response.json();
-        const content = data.content?.[0]?.text;
+        const content = await this.callLlm(
+          JSON.stringify(circuit),
+          'You are a master robotics & electrical engineering professor. Given this circuit JSON, identify any electrical issues (short circuits, missing resistors, polarity reversals, inverted lines, missing grounds) and return a JSON object with format: { "errors": [ { "componentId": string, "issue": string, "explanation": string, "suggestedFix": string } ] }'
+        );
         if (content) {
           const parsed = JSON.parse(content);
-          if (Array.isArray(parsed.errors)) {
+          if (Array.isArray(parsed.errors) && parsed.errors.length > 0) {
             return {
-              hasErrors: parsed.errors.length > 0,
+              hasErrors: true,
               errors: parsed.errors,
               timestamp: new Date().toLocaleTimeString(),
             };
           }
         }
       } catch (err) {
-        console.warn('AI API failed, falling back to rule engine:', err);
+        console.warn('Live LLM inspection skipped, using high-speed rule engine:', err);
       }
     }
 
@@ -82,6 +145,24 @@ class AiService {
    */
   public async explainCircuit(circuit: Circuit): Promise<CircuitExplanation> {
     const componentTypes = circuit.components.map((c) => c.type);
+
+    if (this.config.apiKey) {
+      try {
+        const content = await this.callLlm(
+          JSON.stringify({ components: circuit.components.map(c => ({ id: c.id, type: c.type, label: c.label })), connectionsCount: circuit.connections.length }),
+          'You are an expert embedded systems and robotics educator. Explain the given circuit in clear plain English. Return JSON with format: { "summary": string, "architecture": string, "signalFlow": string[] }'
+        );
+        if (content) {
+          const parsed = JSON.parse(content);
+          if (parsed.summary && parsed.architecture && Array.isArray(parsed.signalFlow)) {
+            return parsed;
+          }
+        }
+      } catch (err) {
+        console.warn('Live LLM explain failed, falling back to rule templates:', err);
+      }
+    }
+
     const hasArduino = componentTypes.includes('ArduinoUno');
     const hasEsp32 = componentTypes.includes('ESP32');
     const hasUltrasonic = componentTypes.includes('UltrasonicSensor');
@@ -208,6 +289,23 @@ class AiService {
    * 4. Code Helper / Debugger
    */
   public async debugCode(code: string, issueDescription: string): Promise<CodeDebugResult> {
+    if (this.config.apiKey) {
+      try {
+        const content = await this.callLlm(
+          `Code:\n${code}\n\nIssue reported:\n${issueDescription}`,
+          'You are an expert embedded C++ firmware engineer. Diagnose bugs in the user\'s Arduino/ESP32 code. Return JSON with format: { "analysis": string, "suggestions": string[], "correctedCode": string }'
+        );
+        if (content) {
+          const parsed = JSON.parse(content);
+          if (parsed.analysis && Array.isArray(parsed.suggestions)) {
+            return parsed;
+          }
+        }
+      } catch (err) {
+        console.warn('Live LLM debug failed, using default diagnostics:', err);
+      }
+    }
+
     return {
       analysis: `Examined Arduino C++ control routine against report: "${issueDescription}". The logic reads ultrasonic pulse time and triggers differential wheel steering.`,
       suggestions: [

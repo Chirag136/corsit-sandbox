@@ -512,6 +512,86 @@ export const TinkerCanvas: React.FC<TinkerCanvasProps> = ({
           </Group>
         )}
 
+        {/* 8. PUSHBUTTON (TinkerCAD 4-pin Tactile Switch) */}
+        {comp.type === 'Pushbutton' && (
+          <Group
+            onMouseDown={(e) => {
+              e.cancelBubble = true;
+              comp.state.isPressed = true;
+            }}
+            onMouseUp={(e) => {
+              e.cancelBubble = true;
+              comp.state.isPressed = false;
+            }}
+          >
+            {/* Plastic Base */}
+            <Rect
+              width={catalog.width}
+              height={catalog.height}
+              fill="#18181B"
+              stroke="#3F3F46"
+              strokeWidth={1.5}
+              cornerRadius={6}
+              shadowColor="#000"
+              shadowBlur={8}
+            />
+            {/* Metal Face Plate */}
+            <Rect width={50} height={50} x={10} y={10} fill="#71717A" stroke="#52525B" strokeWidth={1} cornerRadius={4} />
+            {/* Corner Rivets */}
+            <Circle x={14} y={14} radius={2} fill="#A1A1AA" />
+            <Circle x={56} y={14} radius={2} fill="#A1A1AA" />
+            <Circle x={14} y={56} radius={2} fill="#A1A1AA" />
+            <Circle x={56} y={56} radius={2} fill="#A1A1AA" />
+            {/* Round Actuator Button (Depresses on click) */}
+            <Circle
+              x={35}
+              y={35}
+              radius={comp.state.isPressed ? 14 : 16}
+              fill={comp.state.isPressed ? '#1D4ED8' : '#2563EB'}
+              stroke="#1E40AF"
+              strokeWidth={2}
+              shadowColor={comp.state.isPressed ? '#3B82F6' : 'transparent'}
+              shadowBlur={comp.state.isPressed ? 10 : 0}
+            />
+            <Text text={comp.state.isPressed ? 'DOWN' : 'PUSH'} x={24} y={32} fill="#FFFFFF" fontSize={7} fontFamily="IBM Plex Mono" fontStyle="bold" />
+          </Group>
+        )}
+
+        {/* 9. POTENTIOMETER (TinkerCAD Rotary Dial) */}
+        {comp.type === 'Potentiometer' && (
+          <Group>
+            {/* Blue Sealed Cermet Body */}
+            <Rect
+              width={catalog.width}
+              height={catalog.height}
+              fill="#1D4ED8"
+              stroke="#1E40AF"
+              strokeWidth={1.5}
+              cornerRadius={6}
+              shadowColor="#000"
+              shadowBlur={8}
+            />
+            {/* Metal Bushing & Flange */}
+            <Circle x={40} y={38} radius={24} fill="#CBD5E1" stroke="#94A3B8" strokeWidth={1.5} />
+            {/* Inner Rotating Rotor */}
+            <Circle x={40} y={38} radius={18} fill="#475569" stroke="#334155" strokeWidth={1} />
+            {/* Wiper Pointer Indicator based on state value */}
+            {(() => {
+              const val = Number(comp.state.value) || 512;
+              const angleRad = ((val / 1023) * 270 - 135) * (Math.PI / 180);
+              const pX = 40 + Math.cos(angleRad) * 14;
+              const pY = 38 + Math.sin(angleRad) * 14;
+              return (
+                <Group>
+                  <Line points={[40, 38, pX, pY]} stroke="#F59E0B" strokeWidth={3} lineCap="round" />
+                  <Circle x={pX} y={pY} radius={3} fill="#EF4444" />
+                </Group>
+              );
+            })()}
+            <Text text={`${comp.state.value ?? 512}`} x={28} y={4} fill="#F8FAFC" fontSize={8} fontFamily="IBM Plex Mono" fontStyle="bold" />
+          </Group>
+        )}
+
         {/* AI Error Badge if component has an issue */}
         {error && (
           <Group x={catalog.width - 20} y={-8}>

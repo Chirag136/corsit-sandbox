@@ -298,6 +298,8 @@ export class SimulationEngine {
         otherPin?.kind === 'ground' ||
         otherPin?.id.startsWith('GND') ||
         otherPin?.id.includes('minus') ||
+        otherPin?.id.startsWith('p_minus_') ||
+        otherPin?.id.startsWith('pb_minus_') ||
         otherPin?.label === '-'
       ) {
         return true;
@@ -337,7 +339,52 @@ export class SimulationEngine {
         }
       }
 
-      // B. Wire connection propagation
+      // B. Breadboard internal rail & terminal strip buses
+      for (const bb of this.circuit.components.filter((c) => c.type === 'Breadboard')) {
+        // Group columns 1..30 top rows (a-e) and bottom rows (f-j)
+        for (let col = 1; col <= 30; col++) {
+          const topRows = ['a', 'b', 'c', 'd', 'e'].map((r) => bb.pins.find((p) => p.id === `bb_${col}${r}`)).filter(Boolean);
+          const topHasHigh = topRows.some((p) => p?.value === 'HIGH' || (typeof p?.value === 'number' && p.value > 0));
+          if (topHasHigh) {
+            topRows.forEach((p) => { if (p) p.value = 'HIGH'; });
+          }
+
+          const botRows = ['f', 'g', 'h', 'i', 'j'].map((r) => bb.pins.find((p) => p.id === `bb_${col}${r}`)).filter(Boolean);
+          const botHasHigh = botRows.some((p) => p?.value === 'HIGH' || (typeof p?.value === 'number' && p.value > 0));
+          if (botHasHigh) {
+            botRows.forEach((p) => { if (p) p.value = 'HIGH'; });
+          }
+        }
+
+        // Top & bottom power rails (+ and -)
+        const topPlus = bb.pins.filter((p) => p.id.startsWith('p_plus_'));
+        if (topPlus.some((p) => p.value === 'HIGH')) {
+          topPlus.forEach((p) => (p.value = 'HIGH'));
+        }
+        const botPlus = bb.pins.filter((p) => p.id.startsWith('pb_plus_'));
+        if (botPlus.some((p) => p.value === 'HIGH')) {
+          botPlus.forEach((p) => (p.value = 'HIGH'));
+        }
+      }
+
+      // C. Pushbutton momentary bridge (connects T1a/T1b to T2a/T2b when isPressed)
+      for (const pb of this.circuit.components.filter((c) => c.type === 'Pushbutton')) {
+        if (pb.state.isPressed) {
+          const t1a = pb.pins.find((p) => p.id === 'T1a');
+          const t1b = pb.pins.find((p) => p.id === 'T1b');
+          const t2a = pb.pins.find((p) => p.id === 'T2a');
+          const t2b = pb.pins.find((p) => p.id === 'T2b');
+          const isHigh = [t1a, t1b, t2a, t2b].some((p) => p?.value === 'HIGH' || (typeof p?.value === 'number' && p.value > 0));
+          if (isHigh) {
+            if (t1a) t1a.value = 'HIGH';
+            if (t1b) t1b.value = 'HIGH';
+            if (t2a) t2a.value = 'HIGH';
+            if (t2b) t2b.value = 'HIGH';
+          }
+        }
+      }
+
+      // D. Wire connection propagation
       for (const conn of this.circuit.connections) {
         const fromComp = this.circuit.components.find((c) => c.id === conn.from.componentId);
         const toComp = this.circuit.components.find((c) => c.id === conn.to.componentId);
