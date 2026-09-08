@@ -7,7 +7,7 @@ import {
 } from './types/circuit';
 import { RobotState, Obstacle } from './types/simulation';
 import { CircuitExplanation } from './types/ai';
-import { OBSTACLE_AVOIDER_CIRCUIT, PRESET_CIRCUITS } from './data/presetCircuits';
+import { OBSTACLE_AVOIDER_CIRCUIT, PRESET_CIRCUITS, EMPTY_CIRCUIT } from './data/presetCircuits';
 import { TRACK_PRESETS } from './data/trackPresets';
 import { createComponentInstance } from './data/componentCatalog';
 import { SimulationEngine } from './engine/simulationEngine';
@@ -26,8 +26,8 @@ import confetti from 'canvas-confetti';
 
 export function App() {
   // Project & Circuit state
-  const [projectName, setProjectName] = useState('CorSIT Autonomous Bot');
-  const [circuit, setCircuit] = useState<Circuit>(OBSTACLE_AVOIDER_CIRCUIT);
+  const [projectName, setProjectName] = useState('CorSIT Sandbox Project');
+  const [circuit, setCircuit] = useState<Circuit>(EMPTY_CIRCUIT);
   const [undoStack, setUndoStack] = useState<Circuit[]>([]);
   const [redoStack, setRedoStack] = useState<Circuit[]>([]);
 
