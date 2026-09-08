@@ -8,7 +8,8 @@ export type ComponentType =
   | 'MotorDriver'
   | 'UltrasonicSensor'
   | 'Pushbutton'
-  | 'Potentiometer';
+  | 'Potentiometer'
+  | 'ServoMotor';
 
 export type PinKind = 'digital' | 'analog' | 'pwm' | 'power' | 'ground';
 export type PinValue = number | 'HIGH' | 'LOW';

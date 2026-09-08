@@ -478,6 +478,36 @@ export class SimulationEngine {
         brightness: isOn ? 1 : 0,
       };
     }
+
+    // 4. Servo Motor
+    const servos = this.circuit.components.filter((c) => c.type === 'ServoMotor');
+    for (const servo of servos) {
+      const sig = servo.pins.find((p) => p.id === 'SIG')?.value;
+      const isGrounded = this.isPinGrounded(servo.id, 'GND');
+      
+      let targetAngle = Number(servo.state.angle) || 90;
+      if (isGrounded) {
+        if (typeof sig === 'number') {
+          targetAngle = (sig / 255) * 180;
+        } else if (sig === 'HIGH') {
+          targetAngle = 180;
+        } else if (sig === 'LOW') {
+          targetAngle = 0; // Default when pulled low
+        }
+      }
+      
+      // Smooth rotation
+      const currentAngle = Number(servo.state.angle) || 90;
+      const diff = targetAngle - currentAngle;
+      let newAngle = currentAngle;
+      if (Math.abs(diff) > 2) {
+         newAngle += diff * 0.1; // approach target slowly
+      } else {
+         newAngle = targetAngle;
+      }
+
+      servo.state = { ...servo.state, angle: newAngle };
+    }
   }
 
   private updateRobotKinematics(dt: number) {

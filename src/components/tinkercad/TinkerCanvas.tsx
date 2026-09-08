@@ -592,6 +592,38 @@ export const TinkerCanvas: React.FC<TinkerCanvasProps> = ({
           </Group>
         )}
 
+        {/* 10. SERVO MOTOR */}
+        {comp.type === 'ServoMotor' && (
+          <Group>
+            {/* Main Blue Body */}
+            <Rect
+              width={catalog.width}
+              height={catalog.height - 20}
+              fill="#2563EB"
+              stroke="#1E40AF"
+              strokeWidth={2}
+              cornerRadius={4}
+            />
+            {/* Mounting Tabs */}
+            <Rect x={-10} y={35} width={10} height={20} fill="#3B82F6" stroke="#1E40AF" strokeWidth={1} />
+            <Rect x={catalog.width} y={35} width={10} height={20} fill="#3B82F6" stroke="#1E40AF" strokeWidth={1} />
+            
+            {/* Servo Horn / Arm based on state angle */}
+            {(() => {
+              const angle = Number(comp.state.angle) || 90;
+              return (
+                <Group x={45} y={35} rotation={angle - 90}>
+                  <Circle radius={15} fill="#F1F5F9" stroke="#94A3B8" strokeWidth={1.5} />
+                  <Rect x={-5} y={-30} width={10} height={30} fill="#F1F5F9" stroke="#94A3B8" strokeWidth={1} />
+                  <Circle x={0} y={0} radius={4} fill="#475569" />
+                  <Circle x={0} y={-25} radius={2} fill="#94A3B8" />
+                  <Circle x={0} y={-15} radius={2} fill="#94A3B8" />
+                </Group>
+              );
+            })()}
+          </Group>
+        )}
+
         {/* AI Error Badge if component has an issue */}
         {error && (
           <Group x={catalog.width - 20} y={-8}>

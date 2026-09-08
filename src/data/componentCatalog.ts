@@ -244,6 +244,21 @@ export const COMPONENT_CATALOG: Record<ComponentType, CatalogItem> = {
     ],
     defaultState: { value: 512, rotationDeg: 0 },
   },
+
+  ServoMotor: {
+    type: 'ServoMotor',
+    name: 'Micro Servo (SG90)',
+    category: 'Actuators',
+    description: '180-degree positional micro servo motor.',
+    width: 90,
+    height: 110,
+    defaultPins: [
+      { id: 'GND', kind: 'ground', value: 'LOW', label: 'Brown (GND)', relX: 15, relY: 95 },
+      { id: 'VCC', kind: 'power', value: 'HIGH', label: 'Red (VCC)', relX: 45, relY: 95 },
+      { id: 'SIG', kind: 'pwm', value: 0, label: 'Orange (SIG)', relX: 75, relY: 95 },
+    ],
+    defaultState: { angle: 90 },
+  },
 };
 
 export function createComponentInstance(

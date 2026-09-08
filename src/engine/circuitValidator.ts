@@ -127,6 +127,7 @@ export function validateCircuit(circuit: Circuit): CircuitError[] {
     // Check missing current-limiting resistor:
     // If anode is wired directly to a GPIO or 3V3 without a Resistor component
     if (anodeTarget) {
+      const targetComp = components.find((c) => c.id === anodeTarget.componentId);
       const isDirectMcuPin =
         anodeTarget.pinId.startsWith('GPIO') ||
         anodeTarget.pinId.startsWith('D') ||
