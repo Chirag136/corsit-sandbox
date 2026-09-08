@@ -129,7 +129,7 @@ export const TinkerNav: React.FC<TinkerNavProps> = ({
             }}
           />
           <img
-            src="/corsit-logo-transparent.png"
+            src={`${import.meta.env.BASE_URL}corsit-logo-transparent.png`}
             alt="CorSIT Logo"
             className="h-8 w-auto relative z-10 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]"
           />
